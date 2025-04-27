@@ -23,12 +23,14 @@ typedef struct {
     int x;
     int y;
     enum Player_State state;
+    int health;
 } Player;
 
 typedef struct {
     int x;
     int y;
     char type;
+    int health;
 } Monster;
 
 typedef struct {
@@ -43,7 +45,7 @@ int getIndex(int x, int y, int width);
 int main() {
     char map[MAP_WIDTH * MAP_HEIGHT];
 
-    Player player = {0, 0, rest};
+    Player player = {0, 0, rest, 20};
     Monster monsters[19];
 
     Move_Position move = {0,0};
@@ -67,14 +69,35 @@ int main() {
         };
         // move player one frame at a time
         if(player.state == moving) {
-            if(move.x < player.x && getIndex(player.x-1, player.y, MAP_WIDTH) >= 0 && map[getIndex(player.x-1, player.y, MAP_WIDTH)] != '#') {
-                player.x--;
-            } else if(move.x > player.x && getIndex(player.x+1, player.y, MAP_WIDTH) < MAP_WIDTH * MAP_HEIGHT && map[getIndex(player.x+1, player.y, MAP_WIDTH)] != '#') {
-                player.x++;
-            } else if(move.y < player.y && getIndex(player.x, player.y-1, MAP_WIDTH) >= 0 && map[getIndex(player.x, player.y-1, MAP_WIDTH)] != '#') {
-                player.y--;
-            } else if(move.y > player.y && getIndex(player.x, player.y+1, MAP_WIDTH) < MAP_WIDTH * MAP_HEIGHT && map[getIndex(player.x, player.y+1, MAP_WIDTH)] != '#') {
-                player.y++;
+            if(move.x < player.x && getIndex(player.x-1, player.y, MAP_WIDTH) >= 0) {
+                if(map[getIndex(player.x-1, player.y, MAP_WIDTH)] == '#') {
+                    move.x = player.x;
+                } else {
+                    player.x--;
+                }
+            } else if(move.x > player.x && getIndex(player.x+1, player.y, MAP_WIDTH) < MAP_WIDTH * MAP_HEIGHT) {
+                if(map[getIndex(player.x+1, player.y, MAP_WIDTH)] == '#') {
+                    move.x = player.x;
+                } else {
+                    player.x++;
+                }
+            } else if(move.y < player.y && getIndex(player.x, player.y-1, MAP_WIDTH) >= 0) {
+                if(map[getIndex(player.x, player.y-1, MAP_WIDTH)] == '#') {
+                    move.y = player.y;
+                } else {
+                    player.y--;
+                }
+            } else if(move.y > player.y && getIndex(player.x, player.y+1, MAP_WIDTH) < MAP_WIDTH * MAP_HEIGHT) {
+                if(map[getIndex(player.x, player.y+1, MAP_WIDTH)] == '#') {
+                    move.y = player.y;
+                } else {
+                    player.y++;
+                }
+            }
+
+            if(map[getIndex(player.x-1, player.y, MAP_WIDTH)] == 'M' || map[getIndex(player.x+1, player.y, MAP_WIDTH)] == 'M' || map[getIndex(player.x, player.y-1, MAP_WIDTH)] == 'M' || map[getIndex(player.x, player.y+1, MAP_WIDTH)] == 'M') {
+                move.x = player.x;
+                move.y = player.y;
             }
 
             if(move.x == player.x && move.y == player.y) {
@@ -90,14 +113,11 @@ int main() {
                     DrawRectangle((i%MAP_WIDTH) * 10, (i/MAP_WIDTH) * 10, 10, 10, GRAY);
                 } else if(map[i] == '.') {
                     DrawRectangle((i%MAP_WIDTH) * 10, (i/MAP_WIDTH) * 10, 10, 10, BLACK);
+                } else if(map[i] == 'M') {
+                    DrawRectangle((i%MAP_WIDTH) * 10, (i/MAP_WIDTH) * 10, 10, 10, BLUE);
                 }
             }
             DrawRectangle((player.x)*10, (player.y)*10, 10, 10, RED);
-            for(int r=0; r<NUM_ROOMS; r++) {
-                if(monsters[r].type == 'M') {
-                    DrawRectangle((monsters[r].x)*10, (monsters[r].y)*10, 10, 10, BLUE);
-                }
-            }
         EndDrawing();
     }
 
@@ -146,18 +166,16 @@ void initMap(char map[], Player *player, Monster monsters[]) {
             rooms[x] = room;
         }
     };
-    printf("hello\n");
     printf("Number of rooms %d \n", num_rooms);
     int player_x = (rooms[0].width/2) + rooms[0].x;
     int player_y = (rooms[0].height/2) + rooms[0].y;
     player->x = player_x;
     player->y = player_y;
     for(int r=0; r<num_rooms; r++) {
-        printf("Room Number: %d\n", r);
        for(int r2=rooms[r].x; r2<(rooms[r].x + rooms[r].width); r2++) {
             for(int y=rooms[r].y; y<(rooms[r].y + rooms[r].height); y++) {
                 //move the room out of bounds
-                if((y*MAP_WIDTH)+r2 <= (80*60)) {
+                if((y*MAP_WIDTH)+r2 < (80*60)) {
                     map[(y*MAP_WIDTH)+r2] = '.';
                 }
             }
@@ -202,12 +220,17 @@ void initMap(char map[], Player *player, Monster monsters[]) {
         }
     }
 
-    for(int m = 0; m <= num_rooms; m++) {
-        int monster_x = (rooms[m+1].width/2) + rooms[m+1].x;
-        int monster_y = (rooms[m+1].height/2) + rooms[m+1].y;
-        monsters[m].x = monster_x;
-        monsters[m].y = monster_y;
-        monsters[m].type = 'M';
+    for(int m = 1; m < num_rooms; m++) {
+        int monster_x = (rooms[m].width/2) + rooms[m].x;
+        int monster_y = (rooms[m].height/2) + rooms[m].y;
+        if(getIndex(monster_x, monster_y, MAP_WIDTH) < (80*60)) {
+            monsters[m].x = monster_x;
+            monsters[m].y = monster_y;
+            printf("monster indx %d\n", getIndex(monster_x, monster_y, MAP_WIDTH));
+            map[getIndex(monster_x, monster_y, MAP_WIDTH)] = 'M';
+            monsters[m].type = 'M';
+            monsters[m].health = 1;
+        }
     }
 }
 
