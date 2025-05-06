@@ -40,6 +40,8 @@ typedef struct {
 
 void initMap(char map[], Player *player, Monster monsters[]);
 
+void findMonster(int x, int y, Monster monsters[], char map[]);
+
 int getIndex(int x, int y, int width);
 
 int main() {
@@ -69,35 +71,39 @@ int main() {
         };
         // move player one frame at a time
         if(player.state == moving) {
+            Move_Position next_move = {player.x, player.y};
             if(move.x < player.x && getIndex(player.x-1, player.y, MAP_WIDTH) >= 0) {
                 if(map[getIndex(player.x-1, player.y, MAP_WIDTH)] == '#') {
-                    move.x = player.x;
+                    move.x = next_move.x;
                 } else {
-                    player.x--;
+                    next_move.x--;
                 }
             } else if(move.x > player.x && getIndex(player.x+1, player.y, MAP_WIDTH) < MAP_WIDTH * MAP_HEIGHT) {
                 if(map[getIndex(player.x+1, player.y, MAP_WIDTH)] == '#') {
-                    move.x = player.x;
+                    move.x = next_move.x;
                 } else {
-                    player.x++;
+                    next_move.x++;
                 }
             } else if(move.y < player.y && getIndex(player.x, player.y-1, MAP_WIDTH) >= 0) {
                 if(map[getIndex(player.x, player.y-1, MAP_WIDTH)] == '#') {
-                    move.y = player.y;
+                    move.y = next_move.y;
                 } else {
-                    player.y--;
+                    next_move.y--;
                 }
             } else if(move.y > player.y && getIndex(player.x, player.y+1, MAP_WIDTH) < MAP_WIDTH * MAP_HEIGHT) {
                 if(map[getIndex(player.x, player.y+1, MAP_WIDTH)] == '#') {
-                    move.y = player.y;
+                    move.y = next_move.y;
                 } else {
-                    player.y++;
+                    next_move.y++;
                 }
             }
 
-            if(map[getIndex(player.x-1, player.y, MAP_WIDTH)] == 'M' || map[getIndex(player.x+1, player.y, MAP_WIDTH)] == 'M' || map[getIndex(player.x, player.y-1, MAP_WIDTH)] == 'M' || map[getIndex(player.x, player.y+1, MAP_WIDTH)] == 'M') {
-                move.x = player.x;
-                move.y = player.y;
+            if(map[getIndex(next_move.x, next_move.y, MAP_WIDTH)] == 'M') {
+                findMonster(next_move.x, next_move.y, monsters, map);
+                player.state = rest;
+            } else {
+                player.x = next_move.x;
+                player.y = next_move.y;
             }
 
             if(move.x == player.x && move.y == player.y) {
@@ -230,6 +236,20 @@ void initMap(char map[], Player *player, Monster monsters[]) {
             map[getIndex(monster_x, monster_y, MAP_WIDTH)] = 'M';
             monsters[m].type = 'M';
             monsters[m].health = 1;
+        }
+    }
+}
+
+void findMonster(int x, int y, Monster monsters[], char map[]) {
+    for(int i = 0; i < 19; i++) {
+        if(monsters[i].x == x && monsters[i].y == y) {
+            printf("Found monster at %d %d\n", x, y);
+            monsters[i].health--;
+            if(monsters[i].health <= 0) {
+                monsters[i].x = -1;
+                monsters[i].y = -1;
+                map[getIndex(x, y, MAP_WIDTH)] = '.';
+            }
         }
     }
 }
