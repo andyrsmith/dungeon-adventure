@@ -55,6 +55,11 @@ int main() {
     Move_Position move = {0,0};
 
     initMap(map, &player, monsters);
+    Camera2D camera = { 0 };
+    camera.target = (Vector2){ player.x * 10, player.y * 10 };
+    camera.offset = (Vector2){ 800/2.0f, 600/2.0f };
+    camera.rotation = 0.0f;
+    camera.zoom = 1.0f;
 
     InitWindow(800, 600, "Rogue Dungeon");
 
@@ -65,8 +70,10 @@ int main() {
         //get player movement
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
             Vector2 mouse_position = GetMousePosition();
-            move.x = mouse_position.x/10;
-            move.y = mouse_position.y/10;
+            move.x = (mouse_position.x/10) - 40;
+            move.y = (mouse_position.y/10) - 30;
+            move.x = move.x + player.x;
+            move.y = move.y + player.y;
 
             player.state = moving;
 
@@ -106,6 +113,8 @@ int main() {
             } else {
                 player.x = next_move.x;
                 player.y = next_move.y;
+                camera.target = (Vector2){ player.x * 10, player.y * 10};
+                camera.offset = (Vector2){ 800/2.0f, 600/2.0f };
             }
 
             if(move.x == player.x && move.y == player.y) {
@@ -117,6 +126,9 @@ int main() {
 
         BeginDrawing();
             ClearBackground(BLACK);
+
+            BeginMode2D(camera);
+
             for(int i=0; i<(MAP_WIDTH*MAP_HEIGHT); i++) {
                 if(map[i] == '#') 
                 {
@@ -128,6 +140,8 @@ int main() {
                 }
             }
             DrawRectangle((player.x)*10, (player.y)*10, 10, 10, RED);
+
+            EndMode2D();
         EndDrawing();
     }
 
