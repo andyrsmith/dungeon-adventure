@@ -1,13 +1,7 @@
 #include "raylib.h"
-#include <stdlib.h>
-#include <stdio.h>
 #include "src/types.h"
 #include "src/map.h"
-
-
-void findMonster(int x, int y, Monster monsters[], char map[]);
-
-void moveMonsters(Monster monsters[], char map[], Player *player);
+#include "src/monster.h"
 
 int main() {
     char map[MAP_WIDTH * MAP_HEIGHT];
@@ -111,43 +105,5 @@ int main() {
     CloseWindow();
 
     return 0;
-}
-
-void findMonster(int x, int y, Monster monsters[], char map[]) {
-    for(int i = 0; i < 19; i++) {
-        if(monsters[i].x == x && monsters[i].y == y) {
-            printf("Found monster at %d %d\n", x, y);
-            monsters[i].health--;
-            if(monsters[i].health <= 0) {
-                monsters[i].x = -1;
-                monsters[i].y = -1;
-                map[getIndex(x, y, MAP_WIDTH)] = '.';
-            }
-        }
-    }
-}
-
-void moveMonsters(Monster monsters[], char map[], Player *player) {
-    for(int i = 0; i < 19; i++) {
-        if(monsters[i].x != -1 && monsters[i].y != -1) {
-            int move_x = rand() % 3 - 1;
-            int move_y = rand() % 3 - 1;
-            if(map[getIndex(monsters[i].x + move_x, monsters[i].y + move_y, MAP_WIDTH)] == '.') {
-                map[getIndex(monsters[i].x, monsters[i].y, MAP_WIDTH)] = '.';
-                monsters[i].x += move_x;
-                monsters[i].y += move_y;
-                map[getIndex(monsters[i].x, monsters[i].y, MAP_WIDTH)] = 'M';
-            }
-
-            if(monsters[i].x == player->x && monsters[i].y == player->y) { 
-                printf("Monster found player at %d %d\n", monsters[i].x, monsters[i].y);
-                player->health--;
-                if(player->health <= 0) {
-                    printf("Player is dead\n");
-                    CloseWindow();
-                }
-            }
-        }
-    }
 }
 
