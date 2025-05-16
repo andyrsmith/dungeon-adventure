@@ -7,7 +7,7 @@ TARGET = dungeon
 all: $(TARGET)
 
 $(TARGET): main.c
-	$(CC) $(CFLAGS) -o $(TARGET) main.c $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $(TARGET) main.c src/map.c $(LDFLAGS)
 
 clean:
 	rm -f $(TARGET)
