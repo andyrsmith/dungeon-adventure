@@ -2,6 +2,29 @@
 #include "src/types.h"
 #include "src/map.h"
 #include "src/monster.h"
+#include <stdio.h>
+
+typedef struct {
+    Texture2D tileset;
+    int tileWidth;
+    int tileHeight;
+    int tilesPerRow;
+    int tileSpace;
+} Tilemap;
+
+#define TILE_SIZE 16
+
+Rectangle GetTileRect(Tilemap tilemap, int tileID) {
+    int row = tileID / tilemap.tilesPerRow;
+    int col = tileID % tilemap.tilesPerRow;
+
+    return (Rectangle) {
+        (col * tilemap.tileWidth) + col,
+        (row * tilemap.tileHeight) + row,
+        tilemap.tileWidth,
+        tilemap.tileHeight
+    };
+}
 
 int main() {
     char map[MAP_WIDTH * MAP_HEIGHT];
@@ -12,13 +35,31 @@ int main() {
     Move_Position move = {0,0};
 
     initMap(map, &player, monsters);
+
     Camera2D camera = { 0 };
-    camera.target = (Vector2){ player.x * 10, player.y * 10 };
+    camera.target = (Vector2){ player.x * TILE_SIZE, player.y * TILE_SIZE };
     camera.offset = (Vector2){ 800/2.0f, 600/2.0f };
     camera.rotation = 0.0f;
-    camera.zoom = 1.0f;
+    camera.zoom = 2.0f;
 
     InitWindow(800, 600, "Rogue Dungeon");
+
+    Tilemap dungeonTileMap;
+    dungeonTileMap.tileset = LoadTexture("resources/roguelikeDungeon_transparent.png");
+    printf("Texture loaded");
+    dungeonTileMap.tileWidth = 16;
+    dungeonTileMap.tileHeight = 16;
+    dungeonTileMap.tilesPerRow = 29;
+    dungeonTileMap.tileSpace = 1;
+
+    Tilemap characterTileMap;
+    characterTileMap.tileset = LoadTexture("resources/roguelikeChar_transparent.png");
+    printf("Texture loaded");
+    characterTileMap.tileWidth = 16;
+    characterTileMap.tileHeight = 16;
+    characterTileMap.tilesPerRow = 56;
+    characterTileMap.tileSpace = 1;
+
 
     SetTargetFPS(60);
 
@@ -27,8 +68,8 @@ int main() {
         //get player movement
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
             Vector2 mouse_position = GetMousePosition();
-            move.x = (mouse_position.x/10) - 40;
-            move.y = (mouse_position.y/10) - 30;
+            move.x = (mouse_position.x/TILE_SIZE) - ((800/2)/TILE_SIZE);
+            move.y = (mouse_position.y/TILE_SIZE) - ((600/2)/TILE_SIZE);
             move.x = move.x + player.x;
             move.y = move.y + player.y;
 
@@ -70,7 +111,7 @@ int main() {
             } else {
                 player.x = next_move.x;
                 player.y = next_move.y;
-                camera.target = (Vector2){ player.x * 10, player.y * 10};
+                camera.target = (Vector2){ player.x * TILE_SIZE, player.y * TILE_SIZE};
                 camera.offset = (Vector2){ 800/2.0f, 600/2.0f };
             }
 
@@ -89,19 +130,30 @@ int main() {
             for(int i=0; i<(MAP_WIDTH*MAP_HEIGHT); i++) {
                 if(map[i] == '#') 
                 {
-                    DrawRectangle((i%MAP_WIDTH) * 10, (i/MAP_WIDTH) * 10, 10, 10, GRAY);
+                    Rectangle sourceRect = GetTileRect(dungeonTileMap, 17);
+                    Vector2 position = {(i%MAP_WIDTH) * TILE_SIZE, (i/MAP_WIDTH) * TILE_SIZE};
+                    DrawTextureRec(dungeonTileMap.tileset, sourceRect, position, WHITE);
+                    //DrawRectangle((i%MAP_WIDTH) * TILE_SIZE, (i/MAP_WIDTH) * TILE_SIZE, TILE_SIZE, TILE_SIZE, GRAY);
                 } else if(map[i] == '.') {
-                    DrawRectangle((i%MAP_WIDTH) * 10, (i/MAP_WIDTH) * 10, 10, 10, BLACK);
+                    DrawRectangle((i%MAP_WIDTH) * TILE_SIZE, (i/MAP_WIDTH) * TILE_SIZE, TILE_SIZE, TILE_SIZE, BLACK);
                 } else if(map[i] == 'M') {
-                    DrawRectangle((i%MAP_WIDTH) * 10, (i/MAP_WIDTH) * 10, 10, 10, BLUE);
+                    //DrawRectangle((i%MAP_WIDTH) * TILE_SIZE, (i/MAP_WIDTH) * TILE_SIZE, TILE_SIZE, TILE_SIZE, BLUE);
+                    Rectangle monsterRect = GetTileRect(characterTileMap, 168);
+                    Vector2 monsterPosition = {(i%MAP_WIDTH) * TILE_SIZE, (i/MAP_WIDTH) * TILE_SIZE};
+                    DrawTextureRec(characterTileMap.tileset, monsterRect, monsterPosition, WHITE);
+
                 }
             }
-            DrawRectangle((player.x)*10, (player.y)*10, 10, 10, RED);
+            //DrawRectangle((player.x)*TILE_SIZE, (player.y)*TILE_SIZE, TILE_SIZE, TILE_SIZE, RED);
+            Rectangle playerRect = GetTileRect(characterTileMap, 336);
+            Vector2 playerPosition = {player.x* TILE_SIZE, player.y* TILE_SIZE};
+            DrawTextureRec(characterTileMap.tileset, playerRect, playerPosition, WHITE);
+
 
             EndMode2D();
         EndDrawing();
     }
-
+    UnloadTexture(dungeonTileMap.tileset);
     CloseWindow();
 
     return 0;
